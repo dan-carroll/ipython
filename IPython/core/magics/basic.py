@@ -5,7 +5,6 @@ import argparse
 from logging import error
 import io
 from pprint import pformat
-import textwrap
 import sys
 from warnings import warn
 
@@ -124,7 +123,7 @@ class BasicMagics(Magics):
           In [6]: %whereami
           Out[6]: u'/home/testuser'
           
-          In [7]: %alias_magic h history -p "-l 30" --line
+          In [7]: %alias_magic h history "-p -l 30" --line
           Created `%h` as an alias for `%history -l 30`.
         """
 

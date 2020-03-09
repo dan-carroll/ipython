@@ -11,6 +11,7 @@ import sys
 import warnings
 from textwrap import dedent
 from unittest import TestCase
+from unittest import mock
 from importlib import invalidate_caches
 from io import StringIO
 
@@ -173,7 +174,6 @@ def test_magic_parse_long_options():
     nt.assert_equal(opts['bar'], "bubble")
 
 
-@dec.skip_without('sqlite3')
 def doctest_hist_f():
     """Test %hist -f with temporary filename.
 
@@ -187,26 +187,6 @@ def doctest_hist_f():
     """
 
 
-@dec.skip_without('sqlite3')
-def doctest_hist_r():
-    """Test %hist -r
-
-    XXX - This test is not recording the output correctly.  For some reason, in
-    testing mode the raw history isn't getting populated.  No idea why.
-    Disabling the output checking for now, though at least we do run it.
-
-    In [1]: 'hist' in _ip.lsmagic()
-    Out[1]: True
-
-    In [2]: x=1
-
-    In [3]: %hist -rl 2
-    x=1 # random
-    %hist -r 2
-    """
-
-
-@dec.skip_without('sqlite3')
 def doctest_hist_op():
     """Test %hist -op
 
@@ -284,7 +264,6 @@ def test_hist_pof():
         assert os.path.isfile(tf)
 
 
-@dec.skip_without('sqlite3')
 def test_macro():
     ip = get_ipython()
     ip.history_manager.reset()   # Clear any existing history.
@@ -298,7 +277,6 @@ def test_macro():
     nt.assert_in("test", ip.magic("macro"))
 
 
-@dec.skip_without('sqlite3')
 def test_macro_run():
     """Test that we can run a multi-line macro successfully."""
     ip = get_ipython()
@@ -732,6 +710,24 @@ class TestEnv(TestCase):
     def test_env(self):
         env = _ip.magic("env")
         self.assertTrue(isinstance(env, dict))
+
+    def test_env_secret(self):
+        env = _ip.magic("env")
+        hidden = "<hidden>"
+        with mock.patch.dict(
+            os.environ,
+            {
+                "API_KEY": "abc123",
+                "SECRET_THING": "ssshhh",
+                "JUPYTER_TOKEN": "",
+                "VAR": "abc"
+            }
+        ):
+            env = _ip.magic("env")
+        assert env["API_KEY"] == hidden
+        assert env["SECRET_THING"] == hidden
+        assert env["JUPYTER_TOKEN"] == hidden
+        assert env["VAR"] == "abc"
 
     def test_env_get_set_simple(self):
         env = _ip.magic("env var val1")

@@ -9,7 +9,6 @@ addons:
 
 python:
     - 3.6
-    - 3.5
 
 sudo: false
 
@@ -38,8 +37,8 @@ install:
   - pip install pip --upgrade
   - pip install setuptools --upgrade
   - pip install -e file://$PWD#egg=ipython[test] --upgrade
-  - pip install trio curio
-  - pip install 'pytest<4' matplotlib
+  - pip install trio curio --upgrade --upgrade-strategy eager
+  - pip install pytest matplotlib
   - pip install codecov check-manifest --upgrade
 
 script:
@@ -66,17 +65,27 @@ after_success:
 
 matrix:
   include:
-    - python: "3.7"
+    - arch: amd64
+      python: "3.7"
       dist: xenial
       sudo: true
-    - python: "3.8-dev"
+    - arch: arm64
+      python: "3.7"
+      dist: xenial
+      env: ARM64=True IPYTHON_TESTING_TIMEOUT_SCALE=2
+      sudo: true
+    - arch: amd64
+      python: "3.8"
       dist: xenial
       sudo: true
-    - python: "3.7-dev"
+    - arch: amd64
+      python: "nightly"
       dist: xenial
       sudo: true
-    - python: "nightly"
-      dist: xenial
+    - arch: arm64
+      python: "nightly"
+      dist: bionic
+      env: ARM64=True
       sudo: true
     - os: osx
       language: generic

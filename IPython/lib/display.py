@@ -130,7 +130,6 @@ class Audio(DisplayObject):
     @staticmethod
     def _make_wav(data, rate, normalize):
         """ Transform a numpy array to a PCM bytestring """
-        import struct
         from io import BytesIO
         import wave
 
@@ -145,7 +144,7 @@ class Audio(DisplayObject):
         waveobj.setframerate(rate)
         waveobj.setsampwidth(2)
         waveobj.setcomptype('NONE','NONE')
-        waveobj.writeframes(b''.join([struct.pack('<h',x) for x in scaled]))
+        waveobj.writeframes(scaled)
         val = fp.getvalue()
         waveobj.close()
 
@@ -170,12 +169,17 @@ class Audio(DisplayObject):
         
         max_abs_value = np.max(np.abs(data))
         normalization_factor = Audio._get_normalization_factor(max_abs_value, normalize)
-        scaled = np.int16(data / normalization_factor * 32767).tolist()
-        return scaled, nchan
+        scaled = data / normalization_factor * 32767
+        return scaled.astype('<h').tostring(), nchan
 
 
     @staticmethod
     def _validate_and_normalize_without_numpy(data, normalize):
+        import array
+        import sys
+
+        data = array.array('f', data)
+
         try:
             max_abs_value = float(max([abs(x) for x in data]))
         except TypeError:
@@ -183,9 +187,11 @@ class Audio(DisplayObject):
                 'supported if numpy is not installed')
 
         normalization_factor = Audio._get_normalization_factor(max_abs_value, normalize)
-        scaled = [int(x / normalization_factor * 32767) for x in data]
+        scaled = array.array('h', [int(x / normalization_factor * 32767) for x in data])
+        if sys.byteorder == 'big':
+            scaled.byteswap()
         nchan = 1
-        return scaled, nchan
+        return scaled.tobytes(), nchan
 
     @staticmethod
     def _get_normalization_factor(max_abs_value, normalize):
@@ -260,10 +266,7 @@ class IFrame(object):
     def _repr_html_(self):
         """return the embed iframe"""
         if self.params:
-            try:
-                from urllib.parse import urlencode # Py 3
-            except ImportError:
-                from urllib import urlencode
+            from urllib.parse import urlencode
             params = "?" + urlencode(self.params)
         else:
             params = ""
@@ -500,7 +503,7 @@ class FileLinks(FileLink):
              substituted for the first and fname will be substituted for the
              second
            fp_format: string to use for formatting filepaths, must contain
-            exactly two "%s" and the dirname will be subsituted for the first
+            exactly two "%s" and the dirname will be substituted for the first
             and fname will be substituted for the second
         """
         def f(dirname, fnames, included_suffixes=None):

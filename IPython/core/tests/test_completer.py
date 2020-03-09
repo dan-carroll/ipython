@@ -175,6 +175,20 @@ class TestCompleter(unittest.TestCase):
 
         ip.complete("x.")
 
+    def test_custom_completion_ordering(self):
+        """Test that errors from custom attribute completers are silenced."""
+        ip = get_ipython()
+
+        _, matches = ip.complete('in')
+        assert matches.index('input') < matches.index('int')
+
+        def complete_example(a):
+            return ['example2', 'example1']
+
+        ip.Completer.custom_completers.add_re('ex*', complete_example)
+        _, matches = ip.complete('ex')
+        assert matches.index('example2') < matches.index('example1')
+
     def test_unicode_completions(self):
         ip = get_ipython()
         # Some strings that trigger different types of completion.  Check them both
@@ -471,10 +485,9 @@ class TestCompleter(unittest.TestCase):
                 5, 6, "real"
             )
 
-            if sys.version_info > (3, 4):
-                yield _, "a[0].from_", 10, "a[0].from_bytes", "Should have completed on a[0].from_: %s", Completion(
-                    5, 10, "from_bytes"
-                )
+            yield _, "a[0].from_", 10, "a[0].from_bytes", "Should have completed on a[0].from_: %s", Completion(
+                5, 10, "from_bytes"
+            )
 
     def test_omit__names(self):
         # also happens to test IPCompleter as a configurable

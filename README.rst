@@ -10,6 +10,10 @@
 .. image:: https://www.codetriage.com/ipython/ipython/badges/users.svg
     :target: https://www.codetriage.com/ipython/ipython/
 
+.. image:: https://raster.shields.io/badge/Follows-NEP29-brightgreen.png
+    :target: https://numpy.org/neps/nep-0029-deprecation_policy.html
+
+
 ===========================================
  IPython: Productive Interactive Computing
 ===========================================
@@ -22,6 +26,10 @@ Welcome to IPython.  Our full documentation is available on `ipython.readthedocs
 contribute to the project.
 
 **IPython versions and Python Support**
+
+Starting with IPython 7.10, IPython follows `NEP 29 <https://numpy.org/neps/nep-0029-deprecation_policy.html>`_
+
+**IPython 7.10+** requires Python version 3.6 and above.
 
 **IPython 7.0** requires Python version 3.5 and above.
 
@@ -109,3 +117,30 @@ version::
         ...
         install_requires=install_req
     )
+
+Alternatives to IPython
+=======================
+
+IPython may not be to your taste; if that's the case there might be similar
+project that you might want to use:
+
+- the classic Python REPL.
+- `bpython <https://bpython-interpreter.org/>`_
+- `mypython <https://www.asmeurer.com/mypython/>`_
+- `ptpython and ptipython <https://pypi.org/project/ptpython/>`
+- `xonsh <https://xon.sh/>`
+
+Ignoring commits with git blame.ignoreRevsFile
+==============================================
+
+As of git 2.23, it is possible to make formatting changes without breaking
+``git blame``. See the `git documentation
+<https://git-scm.com/docs/git-config#Documentation/git-config.txt-blameignoreRevsFile>`_
+for more details.
+
+To use this feature you must:
+
+- Install git >= 2.23
+- Configure your local git repo by running:
+   - POSIX: ``tools\configure-git-blame-ignore-revs.sh``
+   - Windows:  ``tools\configure-git-blame-ignore-revs.bat``

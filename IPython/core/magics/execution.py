@@ -19,16 +19,8 @@ import math
 import re
 from pdb import Restart
 
-# cProfile was added in Python2.5
-try:
-    import cProfile as profile
-    import pstats
-except ImportError:
-    # profile isn't bundled by default in Debian for license reasons
-    try:
-        import profile, pstats
-    except ImportError:
-        profile = pstats = None
+import cProfile as profile
+import pstats
 
 from IPython.core import oinspect
 from IPython.core import magic_arguments
@@ -181,16 +173,8 @@ class ExecutionMagics(Magics):
 
     def __init__(self, shell):
         super(ExecutionMagics, self).__init__(shell)
-        if profile is None:
-            self.prun = self.profile_missing_notice
         # Default execution function used to actually run user code.
         self.default_runner = None
-
-    def profile_missing_notice(self, *args, **kwargs):
-        error("""\
-The profile module could not be found. It has been removed from the standard
-python packages because of its non-free license. To use profiling, install the
-python-profiler package from non-free.""")
 
     @skip_doctest
     @no_var_expand
@@ -853,6 +837,8 @@ python-profiler package from non-free.""")
             sys.argv = save_argv
             if restore_main:
                 sys.modules['__main__'] = restore_main
+                if '__mp_main__' in sys.modules:
+                    sys.modules['__mp_main__'] = restore_main
             else:
                 # Remove from sys.modules the reference to main_mod we'd
                 # added.  Otherwise it will trap references to objects
@@ -1171,7 +1157,7 @@ python-profiler package from non-free.""")
         if not quiet :
             # Check best timing is greater than zero to avoid a
             # ZeroDivisionError.
-            # In cases where the slowest timing is lesser than a micosecond
+            # In cases where the slowest timing is lesser than a microsecond
             # we assume that it does not really matter if the fastest
             # timing is 4 times faster than the slowest timing or not.
             if worst > 4 * best and best > 0 and worst > 1e-6:

@@ -13,7 +13,6 @@
 
 import abc
 import ast
-import asyncio
 import atexit
 import builtins as builtin_mod
 import functools
@@ -87,6 +86,7 @@ from ast import AST
 
 # NoOpContext is deprecated, but ipykernel imports it from here.
 # See https://github.com/ipython/ipykernel/issues/157
+# (2016, let's try to remove than in IPython 8.0)
 from IPython.utils.contexts import NoOpContext
 
 try:
@@ -166,13 +166,7 @@ def removed_co_newlocals(function:types.FunctionType) -> types.FunctionType:
 # we still need to run things using the asyncio eventloop, but there is no
 # async integration
 from .async_helpers import (_asyncio_runner,  _asyncify, _pseudo_sync_runner)
-if sys.version_info > (3, 5):
-    from .async_helpers import _curio_runner, _trio_runner, _should_be_async
-else :
-    _curio_runner = _trio_runner = None
-
-    def _should_be_async(cell:str)->bool:
-        return False
+from .async_helpers import _curio_runner, _trio_runner, _should_be_async
 
 
 def _ast_asyncify(cell:str, wrapper_name:str) -> ast.Module:
@@ -701,6 +695,13 @@ class InteractiveShell(SingletonConfigurable):
         self.events.trigger('shell_initialized', self)
         atexit.register(self.atexit_operations)
 
+        # The trio runner is used for running Trio in the foreground thread. It
+        # is different from `_trio_runner(async_fn)` in `async_helpers.py`
+        # which calls `trio.run()` for every cell. This runner runs all cells
+        # inside a single Trio event loop. If used, it is set from
+        # `ipykernel.kernelapp`.
+        self.trio_runner = None
+
     def get_ipython(self):
         """Return the currently running IPython instance."""
         return self
@@ -720,6 +721,9 @@ class InteractiveShell(SingletonConfigurable):
             self.autoindent = not self.autoindent
         else:
             self.autoindent = value
+
+    def set_trio_runner(self, tr):
+        self.trio_runner = tr
 
     #-------------------------------------------------------------------------
     # init_* methods called by __init__
@@ -863,7 +867,7 @@ class InteractiveShell(SingletonConfigurable):
         self.configurables.append(self.display_formatter)
 
     def init_display_pub(self):
-        self.display_pub = self.display_pub_class(parent=self)
+        self.display_pub = self.display_pub_class(parent=self, shell=self)
         self.configurables.append(self.display_pub)
 
     def init_data_pub(self):
@@ -2214,7 +2218,7 @@ class InteractiveShell(SingletonConfigurable):
         list where you want the completer to be inserted."""
 
         newcomp = types.MethodType(completer,self.Completer)
-        self.Completer.matchers.insert(pos,newcomp)
+        self.Completer.custom_matchers.insert(pos,newcomp)
 
     def set_completer_frame(self, frame=None):
         """Set the frame of the completer."""
@@ -2245,8 +2249,7 @@ class InteractiveShell(SingletonConfigurable):
             m.NamespaceMagics, m.OSMagics, m.PackagingMagics,
             m.PylabMagics, m.ScriptMagics,
         )
-        if sys.version_info >(3,5):
-            self.register_magics(m.AsyncMagics)
+        self.register_magics(m.AsyncMagics)
 
         # Register Magic Aliases
         mman = self.magics_manager
@@ -2872,7 +2875,9 @@ class InteractiveShell(SingletonConfigurable):
         # when this is the case, we want to run it using the pseudo_sync_runner
         # so that code can invoke eventloops (for example via the %run , and
         # `%paste` magic.
-        if self.should_run_async(raw_cell):
+        if self.trio_runner:
+            runner = self.trio_runner
+        elif self.should_run_async(raw_cell):
             runner = self.loop_runner
         else:
             runner = _pseudo_sync_runner
@@ -3157,7 +3162,7 @@ class InteractiveShell(SingletonConfigurable):
 
           Experimental value: 'async' Will try to run top level interactive
           async/await code in default runner, this will not respect the
-          interactivty setting and will only run the last node if it is an
+          interactivity setting and will only run the last node if it is an
           expression. 
 
         compiler : callable

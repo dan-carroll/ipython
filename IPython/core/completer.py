@@ -126,7 +126,7 @@ import warnings
 
 from contextlib import contextmanager
 from importlib import import_module
-from typing import Iterator, List, Tuple, Iterable, Union
+from typing import Iterator, List, Tuple, Iterable
 from types import SimpleNamespace
 
 from traitlets.config.configurable import Configurable
@@ -626,6 +626,8 @@ class Completer(Configurable):
         else:
             self.global_namespace = global_namespace
 
+        self.custom_matchers = []
+
         super(Completer, self).__init__(**kwargs)
 
     def complete(self, text, state):
@@ -1122,12 +1124,14 @@ class IPCompleter(Completer):
 
         if self.use_jedi:
             return [
+                *self.custom_matchers,
                 self.file_matches,
                 self.magic_matches,
                 self.dict_key_matches,
             ]
         else:
             return [
+                *self.custom_matchers,
                 self.python_matches,
                 self.file_matches,
                 self.magic_matches,
@@ -1371,18 +1375,18 @@ class IPCompleter(Completer):
         try_jedi = True
 
         try:
-            # should we check the type of the node is Error ?
-            try:
-                # jedi < 0.11
-                from jedi.parser.tree import ErrorLeaf
-            except ImportError:
-                # jedi >= 0.11
-                from parso.tree import ErrorLeaf
-
-            next_to_last_tree = interpreter._get_module().tree_node.children[-2]
+            # find the first token in the current tree -- if it is a ' or " then we are in a string
             completing_string = False
-            if isinstance(next_to_last_tree, ErrorLeaf):
-                completing_string = next_to_last_tree.value.lstrip()[0] in {'"', "'"}
+            try:
+                first_child = next(c for c in interpreter._get_module().tree_node.children if hasattr(c, 'value'))
+            except StopIteration:
+                pass
+            else:
+                # note the value may be ', ", or it may also be ''' or """, or
+                # in some cases, """what/you/typed..., but all of these are
+                # strings.
+                completing_string = len(first_child.value) > 0 and first_child.value[0] in {"'", '"'}
+
             # if we are in a string jedi is likely not the right candidate for
             # now. Skip it.
             try_jedi = not completing_string
@@ -2014,7 +2018,7 @@ class IPCompleter(Completer):
 
         # Start with a clean slate of completions
         matches = []
-        custom_res = self.dispatch_custom_completer(text)
+        
         # FIXME: we should extend our api to return a dict with completions for
         # different types of objects.  The rlcomplete() method could then
         # simply collapse the dict into a list for readline, but we'd have
@@ -2025,29 +2029,24 @@ class IPCompleter(Completer):
                 full_text = line_buffer
             completions = self._jedi_matches(
                 cursor_pos, cursor_line, full_text)
-        if custom_res is not None:
-            # did custom completers produce something?
-            matches = [(m, 'custom') for m in custom_res]
+                
+        if self.merge_completions:
+            matches = []
+            for matcher in self.matchers:
+                try:
+                    matches.extend([(m, matcher.__qualname__)
+                                    for m in matcher(text)])
+                except:
+                    # Show the ugly traceback if the matcher causes an
+                    # exception, but do NOT crash the kernel!
+                    sys.excepthook(*sys.exc_info())
         else:
-            # Extend the list of completions with the results of each
-            # matcher, so we return results to the user from all
-            # namespaces.
-            if self.merge_completions:
-                matches = []
-                for matcher in self.matchers:
-                    try:
-                        matches.extend([(m, matcher.__qualname__)
-                                        for m in matcher(text)])
-                    except:
-                        # Show the ugly traceback if the matcher causes an
-                        # exception, but do NOT crash the kernel!
-                        sys.excepthook(*sys.exc_info())
-            else:
-                for matcher in self.matchers:
-                    matches = [(m, matcher.__qualname__)
-                               for m in matcher(text)]
-                    if matches:
-                        break
+            for matcher in self.matchers:
+                matches = [(m, matcher.__qualname__)
+                            for m in matcher(text)]
+                if matches:
+                    break
+                    
         seen = set()
         filtered_matches = set()
         for m in matches:
@@ -2056,17 +2055,20 @@ class IPCompleter(Completer):
                 filtered_matches.add(m)
                 seen.add(t)
 
-        _filtered_matches = sorted(
-            set(filtered_matches), key=lambda x: completions_sorting_key(x[0]))\
-            [:MATCHES_LIMIT]
+        _filtered_matches = sorted(filtered_matches, key=lambda x: completions_sorting_key(x[0]))
 
+        custom_res = [(m, 'custom') for m in self.dispatch_custom_completer(text) or []]
+        
+        _filtered_matches = custom_res or _filtered_matches
+        
+        _filtered_matches = _filtered_matches[:MATCHES_LIMIT]
         _matches = [m[0] for m in _filtered_matches]
         origins = [m[1] for m in _filtered_matches]
 
         self.matches = _matches
 
         return text, _matches, origins, completions
-
+        
     def fwd_unicode_match(self, text:str) -> Tuple[str, list]:
         if self._names is None:
             self._names = []

@@ -248,10 +248,7 @@ class TestMagicRunSimple(tt.TempFileMixin):
                "        print('object A deleted')\n"
                "a = A()\n")
         self.mktmp(src)
-        if dec.module_not_available('sqlite3'):
-            err = 'WARNING: IPython History requires SQLite, your history will not be saved\n'
-        else:
-            err = None
+        err = None
         tt.ipexec_validate(self.fname, 'object A deleted', err)
     
     def test_aggressive_namespace_cleanup(self):
@@ -306,10 +303,7 @@ ARGV 1-: ['C-third']
 tclass.py: deleting object: C-second
 tclass.py: deleting object: C-third
 """
-        if dec.module_not_available('sqlite3'):
-            err = 'WARNING: IPython History requires SQLite, your history will not be saved\n'
-        else:
-            err = None
+        err = None
         tt.ipexec_validate(self.fname, out, err)
 
     def test_run_i_after_reset(self):
@@ -538,6 +532,35 @@ def test_run_tb():
         nt.assert_equal(out.count("---->"), 3)
         del ip.user_ns['bar']
         del ip.user_ns['foo']
+
+
+def test_multiprocessing_run():
+    """Set we can run mutiprocesgin without messing up up main namespace
+
+    Note that import `nose.tools as nt` mdify the value s
+    sys.module['__mp_main__'] so wee need to temporarily set it to None to test
+    the issue.
+    """
+    with TemporaryDirectory() as td:
+        mpm = sys.modules.get('__mp_main__')
+        assert mpm is not None
+        sys.modules['__mp_main__'] = None
+        try:
+            path = pjoin(td, 'test.py')
+            with open(path, 'w') as f:
+                f.write("import multiprocessing\nprint('hoy')")
+            with capture_output() as io:
+                _ip.run_line_magic('run', path)
+                _ip.run_cell("i_m_undefined")
+            out = io.stdout
+            nt.assert_in("hoy", out)
+            nt.assert_not_in("AttributeError", out)
+            nt.assert_in("NameError", out)
+            nt.assert_equal(out.count("---->"), 1)
+        except:
+            raise
+        finally:
+            sys.modules['__mp_main__'] = mpm
 
 @dec.knownfailureif(sys.platform == 'win32', "writes to io.stdout aren't captured on Windows")
 def test_script_tb():

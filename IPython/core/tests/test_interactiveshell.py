@@ -566,7 +566,7 @@ class TestSystemRaw(ExitCodeChecks):
 
     def setUp(self):
         super().setUp()
-        self.sytem = ip.system_raw
+        self.system = ip.system_raw
 
     @onlyif_unicode_paths
     def test_1(self):
@@ -590,7 +590,7 @@ class TestSystemPipedExitCode(ExitCodeChecks):
 
     def setUp(self):
         super().setUp()
-        self.sytem = ip.system_piped
+        self.system = ip.system_piped
 
     @skip_win32
     def test_exit_code_ok(self):
@@ -914,7 +914,7 @@ class TestSyntaxErrorTransformer(unittest.TestCase):
             ip.run_cell('3456')
 
 
-class TestWarningSupression(unittest.TestCase):
+class TestWarningSuppression(unittest.TestCase):
     def test_warning_suppression(self):
         ip.run_cell("import warnings")
         try:
@@ -998,3 +998,21 @@ def test_should_run_async():
     assert not ip.should_run_async("a = 5")
     assert ip.should_run_async("await x")
     assert ip.should_run_async("import asyncio; await asyncio.sleep(1)")
+
+
+def test_set_custom_completer():
+    num_completers = len(ip.Completer.matchers)
+
+    def foo(*args, **kwargs):
+        return "I'm a completer!"
+
+    ip.set_custom_completer(foo, 0)
+
+    # check that we've really added a new completer
+    assert len(ip.Completer.matchers) == num_completers + 1
+
+    # check that the first completer is the function we defined
+    assert ip.Completer.matchers[0]() == "I'm a completer!"
+
+    # clean up
+    ip.Completer.custom_matchers.pop()

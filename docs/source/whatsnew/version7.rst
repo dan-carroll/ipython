@@ -2,6 +2,287 @@
  7.x Series
 ============
 
+.. _version 713:
+
+IPython 7.13
+============
+
+IPython 7.13 is the first release of the 7.x branch since master is diverging
+toward an 8.0. Exiting new features have already been merged in 8.0 and will
+not be available on the 7.x branch. All the changes bellow have been backported
+from the master branch.
+
+
+ - Fix inability to run PDB when inside an event loop :ghpull:`12141`
+ - Fix ability to interrupt some processes on windows :ghpull:`12137`
+ - Fix debugger shortcuts :ghpull:`12132`
+ - improve tab completion when inside a string by removing irrelevant elements :ghpull:`12128`
+ - Fix display of filename tab completion when the path is long :ghpull:`12122`
+ - Many removal of Python 2 specific code path :ghpull:`12110`
+ - displaying wav files do not require NumPy anymore, and is 5x to 30x faster :ghpull:`12113`
+
+See the list of all closed issues and pull request on `github
+<https://github.com/ipython/ipython/pulls?q=is%3Aclosed+milestone%3A7.13>`_.
+
+.. _version 712:
+
+IPython 7.12
+============
+
+IPython 7.12 is a minor update that mostly brings code cleanup, removal of
+longtime deprecated function and a couple update to documentation cleanup as well.
+
+Notable changes are the following:
+
+ - Exit non-zero when ipython is given a file path to run that doesn't exist :ghpull:`12074`
+ - Test PR on ARM64 with Travis-CI :ghpull:`12073`
+ - Update CI to work with latest Pytest :ghpull:`12086`
+ - Add infrastructure to run ipykernel eventloop via trio :ghpull:`12097`
+ - Support git blame ignore revs :ghpull:`12091`
+ - Start multi-line ``__repr__`` s on their own line :ghpull:`12099`
+
+.. _version 7111:
+
+IPython 7.11.1
+==============
+
+A couple of deprecated functions (no-op) have been reintroduces in py3compat as
+Cython was still relying on them, and will be removed in a couple of versions.
+
+.. _version 711:
+
+IPython 7.11
+============
+
+IPython 7.11 received a couple of compatibility fixes and code cleanup.
+
+A number of function in the ``py3compat`` have been removed; a number of types
+in the IPython code base are now non-ambiguous and now always ``unicode``
+instead of ``Union[Unicode,bytes]``; many of the relevant code path have thus
+been simplified/cleaned and types annotation added.
+
+IPython support several verbosity level from exceptions. ``xmode plain`` now
+support chained exceptions. :ghpull:`11999`
+
+We are starting to remove ``shell=True`` in some usages of subprocess. While not directly
+a security issue (as IPython is made to run arbitrary code anyway) it is not good
+practice and we'd like to show the example. :ghissue:`12023`. This discussion
+was started by ``@mschwager`` thanks to a new auditing tool they are working on
+with duo-labs (`dlint <https://github.com/duo-labs/dlint>`_).
+
+Work around some bugs in Python 3.9 tokenizer :ghpull:`12057`
+
+IPython will now print its version after a crash. :ghpull:`11986`
+
+This is likely the last release from the 7.x series that will see new feature.
+The master branch will soon accept large code changes and thrilling new
+features; the 7.x branch will only start to accept critical bug fixes, and
+update dependencies.
+
+.. _version 7102:
+
+IPython 7.10.2
+==============
+
+IPython 7.10.2 fix a couple of extra incompatibility between IPython, ipdb,
+asyncio and Prompt Toolkit 3.
+
+.. _version 7101:
+
+IPython 7.10.1
+==============
+
+IPython 7.10.1 fix a couple of incompatibilities with Prompt toolkit 3 (please
+update Prompt toolkit to 3.0.2 at least), and fixes some interaction with
+headless IPython.
+
+.. _version 7100:
+
+IPython 7.10.0
+==============
+
+IPython 7.10 is the first double digit minor release in the  last decade, and
+first since the release of IPython 1.0, previous double digit minor release was
+in August 2009.
+
+We've been trying to give you regular release on the last Friday of every month
+for a guaranty of rapid access to bug fixes and new features.
+
+Unlike the previous first few releases that have seen only a couple of code
+changes, 7.10 bring a number of changes, new features and bugfixes.
+
+Stop Support for Python 3.5 – Adopt NEP 29
+------------------------------------------
+
+IPython has decided to follow the informational `NEP 29
+<https://numpy.org/neps/nep-0029-deprecation_policy.html>`_ which layout a clear
+policy as to which version of (C)Python and NumPy are supported.
+
+We thus dropped support for Python 3.5, and cleaned up a number of code path
+that were Python-version dependant. If you are on 3.5 or earlier pip should
+automatically give you the latest compatible version of IPython so you do not
+need to pin to a given version.
+
+Support for Prompt Toolkit 3.0
+------------------------------
+
+Prompt Toolkit 3.0 was release a week before IPython 7.10 and introduces a few
+breaking changes. We believe IPython 7.10 should be compatible with both Prompt
+Toolkit 2.x and 3.x, though it has not been extensively tested with 3.x so
+please report any issues.
+
+
+Prompt Rendering Performance improvements
+-----------------------------------------
+
+Pull Request :ghpull:`11933` introduced an optimisation in the prompt rendering
+logic that should decrease the resource usage of IPython when using the
+_default_ configuration but could potentially introduce a regression of
+functionalities if you are using a custom prompt.
+
+We know assume if you haven't changed the default keybindings that the prompt
+**will not change** during the duration of your input – which is for example
+not true when using vi insert mode that switches between `[ins]` and `[nor]`
+for the current mode.
+
+If you are experiencing any issue let us know.
+
+Code autoformatting
+-------------------
+
+The IPython terminal can now auto format your code just before entering a new
+line or executing a command. To do so use the
+``--TerminalInteractiveShell.autoformatter`` option and set it to ``'black'``;
+if black is installed IPython will use black to format your code when possible.
+
+IPython cannot always properly format your code; in particular it will
+auto formatting with *black* will only work if:
+
+   - Your code does not contains magics or special python syntax.
+
+   - There is no code after your cursor.
+
+The Black API is also still in motion; so this may not work with all versions of
+black.
+
+It should be possible to register custom formatter, though the API is till in
+flux.
+
+Arbitrary Mimetypes Handing in Terminal (Aka inline images in terminal)
+-----------------------------------------------------------------------
+
+When using IPython terminal it is now possible to register function to handle
+arbitrary mimetypes. While rendering non-text based representation was possible in
+many jupyter frontend; it was not possible in terminal IPython, as usually
+terminal are limited to displaying text. As many terminal these days provide
+escape sequences to display non-text; bringing this loved feature to IPython CLI
+made a lot of sens. This functionality will not only allow inline images; but
+allow opening of external program; for example ``mplayer`` to "display" sound
+files.
+
+So far only the hooks necessary for this are in place, but no default mime
+renderers added; so inline images will only be available via extensions. We will
+progressively enable these features by default in the next few releases, and
+contribution is welcomed.
+
+We welcome any feedback on the API. See :ref:`shell_mimerenderer` for more
+informations.
+
+This is originally based on work form in :ghpull:`10610` from @stephanh42
+started over two years ago, and still a lot need to be done.
+
+MISC
+----
+
+ - Completions can define their own ordering :ghpull:`11855`
+ - Enable Plotting in the same cell than the one that import matplotlib
+   :ghpull:`11916`
+ - Allow to store and restore multiple variables at once :ghpull:`11930`
+
+You can see `all pull-requests <https://github.com/ipython/ipython/pulls?q=is%3Apr+milestone%3A7.10+is%3Aclosed>`_ for this release.
+
+API Changes
+-----------
+
+Change of API and exposed objects automatically detected using `frappuccino <https://pypi.org/project/frappuccino/>`_ (still in beta):
+
+The following items are new in IPython 7.10::
+
+    + IPython.terminal.shortcuts.reformat_text_before_cursor(buffer, document, shell)
+    + IPython.terminal.interactiveshell.PTK3
+    + IPython.terminal.interactiveshell.black_reformat_handler(text_before_cursor)
+    + IPython.terminal.prompts.RichPromptDisplayHook.write_format_data(self, format_dict, md_dict='None')
+
+The following items have been removed in 7.10::
+
+    - IPython.lib.pretty.DICT_IS_ORDERED
+
+The following signatures differ between versions::
+
+    - IPython.extensions.storemagic.restore_aliases(ip)
+    + IPython.extensions.storemagic.restore_aliases(ip, alias='None')
+
+Special Thanks
+--------------
+
+ - @stephanh42 who started the work on inline images in terminal 2 years ago
+ - @augustogoulart who spent a lot of time triaging issues and responding to
+   users.
+ - @con-f-use who is my (@Carreau) first sponsor on GitHub, as a reminder if you
+   like IPython, Jupyter and many other library of the SciPy stack you can
+   donate to numfocus.org non profit
+
+.. _version 790:
+
+IPython 7.9.0
+=============
+
+IPython 7.9 is a small release with a couple of improvement and bug fixes.
+
+ - Xterm terminal title should be restored on exit :ghpull:`11910`
+ - special variables ``_``,``__``, ``___`` are not set anymore when cache size
+   is 0 or less.  :ghpull:`11877`
+ - Autoreload should have regained some speed by using a new heuristic logic to
+   find all objects needing reload. This should avoid large objects traversal
+   like pandas dataframes. :ghpull:`11876`
+ - Get ready for Python 4. :ghpull:`11874`
+ - `%env` Magic now has heuristic to hide potentially sensitive values :ghpull:`11896`
+
+This is a small release despite a number of Pull Request Pending that need to
+be reviewed/worked on. Many of the core developers have been busy outside of
+IPython/Jupyter and we thanks all contributor for their patience; we'll work on
+these as soon as we have time.
+
+
+.. _version780:
+
+IPython 7.8.0
+=============
+
+IPython 7.8.0 contain a few bugfix and 2 new APIs:
+
+ - Enable changing the font color for LaTeX rendering :ghpull:`11840`
+ - and Re-Expose some PDB API (see below)
+
+Expose Pdb API
+--------------
+
+Expose the built-in ``pdb.Pdb`` API. ``Pdb`` constructor arguments are generically
+exposed, regardless of python version.
+Newly exposed arguments:
+
+- ``skip`` - Python 3.1+
+- ``nosiginnt`` - Python 3.2+
+- ``readrc`` - Python 3.6+
+
+Try it out::
+
+    from IPython.terminal.debugger import TerminalPdb
+    pdb = TerminalPdb(skip=["skipthismodule"])
+
+
+See :ghpull:`11840`
+
 .. _version770:
 
 IPython 7.7.0
@@ -142,8 +423,8 @@ preserves prior behavior of normalizing the audio to the maximum possible range.
 Setting to `False` disables normalization.
 
 
-Miscelanious
-------------
+Miscellaneous
+-------------
 
  - Fix improper acceptation of ``return`` outside of functions. :ghpull:`11641`.
  - Fixed PyQt 5.11 backwards incompatibility causing sip import failure.

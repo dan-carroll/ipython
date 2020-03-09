@@ -1,6 +1,185 @@
 Issues closed in the 7.x development cycle
 ==========================================
 
+Issues closed in 8.12
+---------------------
+
+
+GitHub stats for 2020/02/01 - 2020/02/28 (tag: 7.12.0)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 1 issues and merged 24 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.13>`__
+
+The following 12 authors contributed 108 commits.
+
+* Alex Hall
+* Augusto
+* Coon, Ethan T
+* Daniel Hahler
+* Inception95
+* Itamar Turner-Trauring
+* Jonas Haag
+* Jonathan Slenders
+* linar-jether
+* Matthias Bussonnier
+* Nathan Goldbaum
+* Terry Davis
+
+Issues closed in 7.12
+---------------------
+
+GitHub stats for 2020/01/01 - 2020/01/31 (tag: 7.11.1)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 2 issues and merged 14 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.12>`__
+
+The following 11 authors contributed 48 commits.
+
+* Augusto
+* Eric Wieser
+* Jeff Potter
+* Mark E. Haase
+* Matthias Bussonnier
+* ossdev07
+* ras44
+* takuya fujiwara
+* Terry Davis
+* Thomas A Caswell
+* yangyang
+
+Issues closed in 7.11
+---------------------
+
+GitHub stats for 2019/12/01 - 2019/12/27 (tag: 7.10.1)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 4 issues and merged 36 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.11>`__
+
+The following 16 authors contributed 114 commits.
+
+* Augusto
+* Benjamin Ragan-Kelley
+* Chemss Eddine Ben Hassine
+* Danny Hermes
+* Dominik Miedziński
+* Jonathan Feinberg
+* Jonathan Slenders
+* Joseph Kahn
+* kousik
+* Kousik Mitra
+* Marc Hernandez Cabot
+* Matthias Bussonnier
+* Naveen Honest Raj K
+* Pratyay Pandey
+* Quentin Peter
+* takuya fujiwara
+
+
+Issues closed in 7.10.2
+-----------------------
+
+
+GitHub stats for 2019/12/01 - 2019/12/14 (tag: 7.10.1)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 3 issues and merged 10 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.10.2>`__
+
+The following 3 authors contributed 11 commits.
+
+* Jonathan Slenders
+* Joseph Kahn
+* Matthias Bussonnier
+
+Issues closed in 7.10.1
+-----------------------
+
+GitHub stats for 2019/11/27 - 2019/12/01 (tag: 7.10.0)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 5 issues and merged 7 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.10.1>`__
+
+The following 2 authors contributed 14 commits.
+
+* Jonathan Slenders
+* Matthias Bussonnier
+
+Issues closed in 7.10
+---------------------
+
+GitHub stats for 2019/10/25 - 2019/11/27 (tag: 7.9.0)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 4 issues and merged 22 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.10>`__
+
+The following 15 authors contributed 101 commits.
+
+* anatoly techtonik
+* Ben Lewis
+* Benjamin Ragan-Kelley
+* Gerrit Buss
+* grey275
+* Gökcen Eraslan
+* Jonathan Slenders
+* Joris Van den Bossche
+* kousik
+* Matthias Bussonnier
+* Nicholas Bollweg
+* Paul McCarthy
+* Srinivas Reddy Thatiparthy
+* Timo Kaufmann
+* Tony Fast
+
+Issues closed in 7.9
+--------------------
+
+GitHub stats for 2019/08/30 - 2019/10/25 (tag: 7.8.0)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 1 issues and merged 9 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.9>`__
+
+The following 8 authors contributed 20 commits.
+
+* Benjamin Ragan-Kelley
+* Hugo
+* Matthias Bussonnier
+* mfh92
+* Mohammad Hossein Sekhavat
+* Niclas
+* Vidar Tonaas Fauske
+* Георгий Фролов
+
+Issues closed in 7.8
+--------------------
+
+GitHub stats for 2019/07/26 - 2019/08/30 (tag: 7.7.0)
+
+These lists are automatically generated, and may be incomplete or contain duplicates.
+
+We closed 1 issues and merged 4 pull requests.
+The full list can be seen `on GitHub <https://github.com/ipython/ipython/issues?q=milestone%3A7.8>`__
+
+The following 5 authors contributed 27 commits.
+
+* Dan Allan
+* Matthias Bussonnier
+* Min ho Kim
+* Oscar Gustafsson
+* Terry Davis
+
 Issues closed in 7.7
 --------------------
 

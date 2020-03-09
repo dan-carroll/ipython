@@ -1,11 +1,13 @@
+import asyncio
 import signal
 import sys
+import threading
 
 from IPython.core.debugger import Pdb
 
 from IPython.core.completer import IPCompleter
 from .ptutils import IPythonPTCompleter
-from .shortcuts import suspend_to_bg, cursor_in_leading_ws
+from .shortcuts import create_ipython_shortcuts, suspend_to_bg, cursor_in_leading_ws
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import (Condition, has_focus, has_selection,
@@ -17,8 +19,13 @@ from prompt_toolkit.shortcuts.prompt import PromptSession
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.formatted_text import PygmentsTokens
 
+from prompt_toolkit import __version__ as ptk_version
+PTK3 = ptk_version.startswith('3.')
+
 
 class TerminalPdb(Pdb):
+    """Standalone IPython debugger."""
+
     def __init__(self, *args, **kwargs):
         Pdb.__init__(self, *args, **kwargs)
         self._ptcomp = None
@@ -36,30 +43,23 @@ class TerminalPdb(Pdb):
                                        )
             self._ptcomp = IPythonPTCompleter(compl)
 
-        kb = KeyBindings()
-        supports_suspend = Condition(lambda: hasattr(signal, 'SIGTSTP'))
-        kb.add('c-z', filter=supports_suspend)(suspend_to_bg)
-
-        if self.shell.display_completions == 'readlinelike':
-            kb.add('tab', filter=(has_focus(DEFAULT_BUFFER)
-                                  & ~has_selection
-                                  & vi_insert_mode | emacs_insert_mode
-                                  & ~cursor_in_leading_ws
-                              ))(display_completions_like_readline)
-
-        self.pt_app = PromptSession(
-                            message=(lambda: PygmentsTokens(get_prompt_tokens())),
-                            editing_mode=getattr(EditingMode, self.shell.editing_mode.upper()),
-                            key_bindings=kb,
-                            history=self.shell.debugger_history,
-                            completer=self._ptcomp,
-                            enable_history_search=True,
-                            mouse_support=self.shell.mouse_support,
-                            complete_style=self.shell.pt_complete_style,
-                            style=self.shell.style,
-                            inputhook=self.shell.inputhook,
-                            color_depth=self.shell.color_depth,
+        options = dict(
+            message=(lambda: PygmentsTokens(get_prompt_tokens())),
+            editing_mode=getattr(EditingMode, self.shell.editing_mode.upper()),
+            key_bindings=create_ipython_shortcuts(self.shell),
+            history=self.shell.debugger_history,
+            completer=self._ptcomp,
+            enable_history_search=True,
+            mouse_support=self.shell.mouse_support,
+            complete_style=self.shell.pt_complete_style,
+            style=self.shell.style,
+            color_depth=self.shell.color_depth,
         )
+
+        if not PTK3:
+            options['inputhook'] = self.shell.inputhook
+        self.pt_loop = asyncio.new_event_loop()
+        self.pt_app = PromptSession(**options)
 
     def cmdloop(self, intro=None):
         """Repeatedly issue a prompt, accept input, parse an initial prefix
@@ -70,6 +70,12 @@ class TerminalPdb(Pdb):
         """
         if not self.use_rawinput:
             raise ValueError('Sorry ipdb does not support use_rawinput=False')
+
+        # In order to make sure that prompt, which uses asyncio doesn't
+        # interfere with applications in which it's used, we always run the
+        # prompt itself in a different thread (we can't start an event loop
+        # within an event loop). This new thread won't have any event loop
+        # running, and here we run our prompt-loop.
 
         self.preloop()
 
@@ -85,10 +91,27 @@ class TerminalPdb(Pdb):
                 else:
                     self._ptcomp.ipy_completer.namespace = self.curframe_locals
                     self._ptcomp.ipy_completer.global_namespace = self.curframe.f_globals
-                    try:
-                        line = self.pt_app.prompt() # reset_current_buffer=True)
-                    except EOFError:
-                        line = 'EOF'
+
+                    # Run the prompt in a different thread.
+                    line = ''
+                    keyboard_interrupt = False
+
+                    def in_thread():
+                        nonlocal line, keyboard_interrupt
+                        try:
+                            line = self.pt_app.prompt()
+                        except EOFError:
+                            line = 'EOF'
+                        except KeyboardInterrupt:
+                            keyboard_interrupt = True
+
+                    th = threading.Thread(target=in_thread)
+                    th.start()
+                    th.join()
+
+                    if keyboard_interrupt:
+                        raise KeyboardInterrupt
+
                 line = self.precmd(line)
                 stop = self.onecmd(line)
                 stop = self.postcmd(stop, line)

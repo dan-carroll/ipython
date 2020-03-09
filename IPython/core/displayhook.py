@@ -153,7 +153,7 @@ class DisplayHook(Configurable):
     # This can be set to True by the write_output_prompt method in a subclass
     prompt_end_newline = False
 
-    def write_format_data(self, format_dict, md_dict=None):
+    def write_format_data(self, format_dict, md_dict=None) -> None:
         """Write the format data dict to the frontend.
 
         This default version of this method simply writes the plain text
@@ -198,7 +198,7 @@ class DisplayHook(Configurable):
         """Update user_ns with various things like _, __, _1, etc."""
 
         # Avoid recursive reference when displaying _oh/Out
-        if result is not self.shell.user_ns['_oh']:
+        if self.cache_size and result is not self.shell.user_ns['_oh']:
             if len(self.shell.user_ns['_oh']) >= self.cache_size and self.do_full_cache:
                 self.cull_cache()
 
